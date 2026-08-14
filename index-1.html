@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Social Science Trainer</title>
+<style>
+:root{--ink:#17212b;--muted:#71808f;--line:#e6ebef;--paper:#f7f9fb;--white:#fff;--accent:#183b56;--accent2:#e5eef5}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink)}
+button,textarea{font:inherit}.shell{min-height:100vh;display:grid;grid-template-columns:270px 1fr}.sidebar{background:#fff;border-right:1px solid var(--line);padding:28px 20px;display:flex;flex-direction:column}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:28px}.logo,.welcome-mark{width:42px;height:42px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800}.brand strong,.brand span{display:block}.brand strong{font-size:14px}.brand span{color:var(--muted);font-size:12px}
+.new,.welcome button{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:13px 14px;cursor:pointer;font-weight:700}.new:hover,.welcome button:hover{opacity:.9}
+.side-title{margin:28px 0 10px;font-size:10px;letter-spacing:.15em;color:var(--muted);font-weight:800}.flow{display:grid;grid-template-columns:30px 1fr;gap:9px 8px;font-size:13px;color:#465361}.flow span{color:#9aa6b1}.history-box{margin-top:auto}.history-item{padding:8px 0;font-size:12px;color:#566573;border-bottom:1px solid #f0f2f4}
+.content{min-width:0;display:flex;flex-direction:column;height:100vh}.topbar{padding:30px 7vw 22px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.86);display:flex;justify-content:space-between;align-items:flex-end}.eyebrow{font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:800}h1{margin:8px 0 0;font-size:clamp(24px,3vw,36px);letter-spacing:-.04em}.badge{font-size:11px;letter-spacing:.12em;color:var(--accent);font-weight:800}
+.chat{flex:1;overflow-y:auto;padding:38px 7vw 30px}.welcome{max-width:660px;margin:8vh auto;text-align:center}.welcome-mark{margin:0 auto 20px;width:58px;height:58px;border-radius:16px;font-size:18px}.welcome h2{font-size:28px;letter-spacing:-.04em;margin:0 0 10px}.welcome p{color:var(--muted);line-height:1.8;margin-bottom:25px}
+.message{display:flex;gap:12px;max-width:850px;margin:0 auto 22px}.message.user{flex-direction:row-reverse}.avatar{flex:0 0 34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:9px;font-weight:800;color:#62707d;background:#e9eef2}.user .avatar{background:var(--accent);color:#fff}.bubble{max-width:78%;white-space:pre-wrap;line-height:1.75;padding:14px 17px;border-radius:14px;background:#fff;border:1px solid var(--line)}.user .bubble{background:var(--accent2);border-color:transparent}
+.composer{padding:16px 7vw 8px;display:flex;gap:10px;background:rgba(247,249,251,.96)}.composer textarea{flex:1;min-height:54px;max-height:150px;resize:vertical;border:1px solid #dce3e8;border-radius:14px;padding:15px;outline:none;background:#fff}.composer textarea:focus{border-color:#aab9c5}.composer button{width:78px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}.notice{margin:0;padding:0 7vw 18px;text-align:center;font-size:10px;color:#98a2ab}
+.typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:#9aa6b1;margin:0 2px;animation:b 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes b{0%,100%{opacity:.25}50%{opacity:1}}
+@media(max-width:760px){.shell{grid-template-columns:1fr}.sidebar{display:none}.topbar{padding:22px 18px}.chat{padding:24px 18px}.composer{padding:12px 18px 6px}.notice{padding:0 18px 12px}.bubble{max-width:88%}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+<div class="brand"><div class="logo">SS</div><div><strong>Social Science</strong><span>Trainer</span></div></div>
+<button class="new" onclick="startTraining()">＋ 今日の問題</button>
+<div class="side-title">学習方針</div>
+<div class="flow"><span>01</span>Issue<span>02</span>Think<span>03</span>Structure<span>04</span>Data<span>05</span>Debate<span>06</span>Waseda Challenge</div>
+<div class="history-box"><div class="side-title">学習履歴</div><div id="history"><small>まだ履歴はありません</small></div></div>
+</aside>
+<section class="content">
+<header class="topbar"><div><div class="eyebrow">WASEDA · SOCIAL SCIENCES</div><h1>社会科学を、考える力に変える。</h1></div><div class="badge">10–15 MIN</div></header>
+<div class="chat" id="chat">
+<div class="welcome" id="welcome"><div class="welcome-mark">SS</div><h2>今日のトレーニングを始めよう。</h2><p>時事用語の暗記ではなく、構造・因果・資料・異なる立場まで考えます。</p><button onclick="startTraining()">トレーニング開始 →</button></div>
+</div>
+<div class="composer"><textarea id="input" placeholder="回答を入力…  Enterで送信 / Shift+Enterで改行"></textarea><button onclick="send()">送信</button></div>
+<p class="notice">学習支援用アプリ。最新の統計・制度情報は一次資料で確認してください。</p>
+</section>
+</div>
+<script>
+const KEY="sst-history";
+let messages=[],started=false,step=0,theme="",scores={knowledge:0,causal:0,multi:0,logic:0};
+
+const issues=[
+["少子化はなぜ止まらないのか？","日本の出生数の減少は、単に「子どもを持ちたい人が減った」という一つの原因だけでは説明できません。雇用、所得、住宅、結婚、ジェンダー、社会保障など複数の要因が絡み合っています。今日は原因を並べるのではなく、どの要因がどのようにつながるのかを考えます。"],
+["なぜ物価が上がっても生活が楽にならないのか？","物価上昇は、単純に「値段が高くなった」という現象ではありません。賃金、金融政策、為替、企業行動、家計の消費などが相互に関係します。今日はインフレを生活実感と経済構造の両面から考えます。"],
+["AIは労働者の仕事を奪うのか？","生成AIなどの技術は、一部の仕事を自動化する一方、新しい仕事や生産性向上を生み出す可能性もあります。重要なのは「AIは良いか悪いか」ではなく、誰の仕事がどう変わり、利益とコストがどう分配されるかです。"],
+["自由貿易は本当にすべての人を豊かにするのか？","自由貿易には、比較優位を通じて全体の効率を高めるという考え方があります。一方、産業構造の変化によって地域や労働者が大きな影響を受ける場合もあります。今日は「国全体の利益」と「特定の人々の利益」を区別して考えます。"],
+["なぜ地方から若者が流出するのか？","地方の人口減少は、単なる出生数の問題だけではありません。雇用、大学、交通、都市への人口集中、公共サービスなどが連鎖しています。今日は「原因→結果」のつながりと、政策の副作用まで考えます."]
+];
+
+function add(role,text){const chat=document.getElementById("chat");document.getElementById("welcome")?.remove();const row=document.createElement("div");row.className="message "+role;row.innerHTML='<div class="avatar">'+(role==="user"?"YOU":"SS")+'</div><div class="bubble"></div>';row.querySelector(".bubble").textContent=text;chat.appendChild(row);chat.scrollTop=chat.scrollHeight}
+function bot(text){add("assistant",text)}
+function user(text){add("user",text)}
+
+function startTraining(){
+messages=[];step=1;started=true;document.getElementById("chat").innerHTML="";
+const x=issues[Math.floor(Math.random()*issues.length)];theme=x[0];
+bot("TODAY’S ISSUE\n「"+theme+"」\n\n"+x[1]+"\n\nSTEP 2｜まず自分で考える\n\n問い：この問題が起きている原因として、どんなことが考えられるでしょうか。思いつくものを、できれば「なぜそれが影響するのか」まで書いてください。");
+}
+
+function send(){
+const el=document.getElementById("input"),text=el.value.trim();if(!text)return;el.value="";user(text);
+if(!started){bot("まず「今日の問題」または「トレーニング開始」を押してください。");return}
+handle(text);
+}
+
+function handle(text){
+if(step===1){
+scores.knowledge=text.length>100?5:text.length>50?4:3;
+scores.causal=/なぜ|ため|影響|結果|につなが|によって|から/.test(text)?4:3;
+step=2;
+bot("STEP 3｜回答を分析\n\n良い出発点です。原因を複数挙げられている点は重要です。ただし、ここでは「原因がある」と言うだけでなく、原因AがどのようにBを通じて結果Cにつながるのかを考える必要があります。\n\nでは一段深く。\n\n「"+text.slice(0,70)+"」の中から一つ選び、それが別の要因を通じて問題に影響する流れを、矢印で説明してみてください。");
+}else if(step===2){
+scores.causal=5;step=3;
+bot("STEP 4｜構造を理解する\n\n今の回答を構造化すると、「背景条件 → 行動や制度 → 結果」という形で考えられます。\n\nここで重要なのは、原因を一列に並べるのではなく、複数の要因が相互作用することです。\n\n次の問い：もし今挙げた要因のうち一つだけを政策によって改善できるとしたら、どれを選びますか？ そして、なぜそこが「レバレッジポイント」になると考えますか？");
+}else if(step===3){
+scores.multi=4;step=4;
+bot("STEP 5｜資料・データ思考\n\n仮に、ある政策導入後に「問題の指標」が改善したとします。しかし、その事実だけでは「政策が原因だった」とは断定できません。\n\nなぜなら、景気、人口構成、別の制度変更、国際情勢など、同時に変化した要因があるかもしれないからです。\n\n問い：『政策導入後に指標が改善した』という資料から、言えること／言えないことをそれぞれ一つずつ挙げてください。");
+}else if(step===4){
+scores.logic=5;step=5;
+bot("STEP 6｜反論チャレンジ\n\nでは政策を一つ実施すると仮定しましょう。\n\nあなたは「その政策を実施すべきだ」という立場です。まず、その政策を支持する理由を一つ述べてください。\n\n次のターンで、こちらから反対側の立場の合理的な反論を出します。");
+}else if(step===5){
+step=6;
+bot("反論：その政策は問題を改善する可能性がある一方、財源や行政コストを必要とし、別の世代・地域・所得層に負担が移る可能性があります。また、政策によって人々の行動が変わることで、当初想定していなかった副作用が生じるかもしれません。\n\nでは再反論してください。「それでも実施する価値がある」と考えるなら、誰が利益を得て、誰が負担するのかまで意識して答えてみましょう。");
+}else{
+finish(text);
+}
+}
+
+function finish(text){
+scores.multi=Math.max(scores.multi,4);
+const total=Math.round((scores.knowledge+scores.causal+scores.multi+scores.logic)/20*100);
+bot("STEP 7｜早稲田社学チャレンジ\n\n【オリジナル総合問題】\n\n資料A：ある政策の実施後、対象地域では問題の指標が改善した。\n資料B：同じ時期に、その地域では雇用環境も改善していた。\n資料C：別地域では政策を実施していないが、同様の改善が見られなかった。\n\n問い：資料A〜Cを踏まえ、政策の効果についてどこまで推論できるか。①根拠、②限界、③追加で必要なデータ、の3点を意識して説明してください。\n\nこの問題に回答したら、TODAY’S REVIEWで終了します。");
+setTimeout(()=>{if(text){const review="今日のテーマ: "+theme+"\\n総合スコア: "+total+"/100";localStorage.setItem(KEY,JSON.stringify({theme,score:total,review,date:new Date().toLocaleDateString("ja-JP")}));renderHistory()}},100);
+step=7;
+}
+
+function renderHistory(){const h=JSON.parse(localStorage.getItem(KEY)||"null"),box=document.getElementById("history");if(h)box.innerHTML='<div class="history-item">'+h.theme+'<br><small>'+h.score+'/100</small></div>'}
+
+document.getElementById("input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+renderHistory();
+</script>
+</body>
+</html>
